@@ -1,0 +1,6 @@
+
+*.pyc
+
+yolo/.ipynb_checkpoints/
+yolo/Untitled.ipynb
+Data/
