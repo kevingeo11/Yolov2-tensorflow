@@ -157,7 +157,12 @@ class inference():
 
     def converter_single(self, ypred):
         outputRescaler = OutputRescaler(self.config)
-         = outputRescaler.fit(ypred)
+        output_scaled = outputRescaler.fit(ypred)
+
+        obj_threshold = 0.03
+        boxes = self.__find_high_class_probability_bbox(output_scaled,obj_threshold)
+
+        return boxes
 
 
 
