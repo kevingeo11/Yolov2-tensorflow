@@ -55,9 +55,9 @@ class config(object):
 '''
 
 if sys.platform == 'win32':
-    base_dir = '..//PASCAL Data'
-    image_dir = '..//PASCAL Data\\Images'
-    label_dir = '..//PASCAL Data\\Labels'
+    base_dir = '..\\Data'
+    image_dir = '..\\Data\\Images'
+    label_dir = '..\\Data\\Labels'
 else:
     base_dir = '../PASCAL Data'
     image_dir = '../PASCAL Data/Images'
