@@ -95,7 +95,6 @@ def build_model(config, trainable = False):
 
     # Layer 15
     x = Conv2D(config.n_anchors * (4 + 1 + config.n_classes), (1,1), strides=(1,1), padding='same', name='conv_23')(x)
-    x = sigmoid(x)
     output = Reshape((config.grid_h, config.grid_w, config.n_anchors, 4 + 1 + config.n_classes))(x)
 
     return Model(input_image, output)

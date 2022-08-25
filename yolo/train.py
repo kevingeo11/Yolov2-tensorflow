@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from utils import config
 from utils.data_loader import DataGenerator
-from utils.loss_v1 import custom_loss
+from utils.loss import custom_loss
 from nets import network as nn
 
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint

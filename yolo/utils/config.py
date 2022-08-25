@@ -64,14 +64,14 @@ else:
     label_dir = '../PASCAL Data/Labels'
 
 weights_dir = 'weights'
-load_weights = False
-load_model_name = '.h5'
+load_weights = True
+load_model_name = 'pascal.h5'
 
 model_name = 'pascal.h5'
 model_name_val = 'pascal_val.h5'
 
-epoch = 10
-lr = 0.0001
+epoch = 50
+lr = 0.001
 
 RUNCPU = True
 

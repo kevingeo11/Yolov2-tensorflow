@@ -132,10 +132,16 @@ class OutputRescaler(object):
     def __init__(self, config):
         self.anchors = config.anchors
 
-    def _sigmoid(self, x):
+    def __sigmoid(self, x):
+        '''
+            Implementation of sigmoid or logistic function
+        '''
         return 1. / (1. + np.exp(-x))
     
-    def _softmax(self, x, axis=-1, t=-100.):
+    def __softmax(self, x, axis = -1, t = -100.):
+        '''
+            Implementation of softmax function
+        '''
         x = x - np.max(x)
 
         if np.min(x) < t:
@@ -143,12 +149,15 @@ class OutputRescaler(object):
 
         e_x = np.exp(x)
         
-        return e_x / e_x.sum(axis, keepdims=True)
+        return e_x / e_x.sum(axis, keepdims = True)
     
-    def get_shifting_matrix(self,netout):
+    def __get_shifting_matrix(self, net):
+        '''
+            Helper function to assure that the prediction bounding box x and y are in the grid cell scale
+        '''
         
-        grid_h, grid_w, n_anchors = netout.shape[:3]
-        no = netout[...,0]
+        grid_h, grid_w, n_anchors = net.shape[:3]
+        no = net[...,0]
         
         anchors_w = self.anchors[:,0]
         anchors_h = self.anchors[:,1]
@@ -171,29 +180,33 @@ class OutputRescaler(object):
             
         return mat_grid_w, mat_grid_h, mat_anchor_w, mat_anchor_h
 
-    def fit(self, netout):    
+    def fit(self, net):
+        '''
+            Network is scaled to grid coordinates
+            All confidences are transformed to 0 to 1
+        '''
 
-        grid_h, grid_w, n_anchors = netout.shape[:3]
+        grid_h, grid_w, _ = net.shape[:3]
         
-        mat_grid_w, mat_grid_h, mat_anchor_w, mat_anchor_h = self.get_shifting_matrix(netout)
+        mat_grid_w, mat_grid_h, mat_anchor_w, mat_anchor_h = self.__get_shifting_matrix(net)
 
-        netout[..., 0]   = (self._sigmoid(netout[..., 0]) + mat_grid_w)/grid_w 
-        netout[..., 1]   = (self._sigmoid(netout[..., 1]) + mat_grid_h)/grid_h 
-        netout[..., 2]   = (np.exp(netout[..., 2]) * mat_anchor_w)
-        netout[..., 3]   = (np.exp(netout[..., 3]) * mat_anchor_h)
+        net[..., 0] = (self.__sigmoid(net[..., 0]) + mat_grid_w)
+        net[..., 1] = (self.__sigmoid(net[..., 1]) + mat_grid_h) 
+        net[..., 2] = (np.exp(net[..., 2]) * mat_anchor_w*grid_w)
+        net[..., 3] = (np.exp(net[..., 3]) * mat_anchor_h*grid_h)
 
-        netout[..., 4]   = self._sigmoid(netout[..., 4])
+        net[..., 4] = self.__sigmoid(net[..., 4])
 
-        expand_conf      = np.expand_dims(netout[..., 4], -1)
-        netout[..., 5:]  = expand_conf * self._softmax(netout[..., 5:]) 
+        expand_conf = np.expand_dims(net[..., 4], -1)
+        net[..., 5:] = expand_conf * self.__softmax(net[..., 5:]) 
     
-        return netout 
+        return net 
 
 
 class inference():
-    def __init__(self, config) -> None:
+    def __init__(self, config, model) -> None:
         self.config = config
-        self.model = None
+        self.model = model
 
     def set_model(self, nn):
         self.model = nn.build_model(self.config)
@@ -205,6 +218,10 @@ class inference():
         self.model.load_weights(loc)
 
     def __encode_core(self, image, rgb=True, norm=True):
+        '''
+            Image is resized to h and w and normalized.
+            Image is also in RGB colour space
+        '''
         image = cv2.resize(image, (self.config.h, self.config.w))
         if rgb:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -221,11 +238,9 @@ class inference():
         for row in range(grid_h):
             for col in range(grid_w):
                 for b in range(n_anchors):
-                    # from 4th element onwards are confidence and class classes
                     classes = netout_scale[row, col, b, 5:]
                     
                     if np.sum(classes) > 0:
-                        # first 4 elements are x, y, w, and h
                         x, y, w, h = netout_scale[row, col, b,:4]
                         confidence = netout_scale[row, col, b, 4]
                         box = Box(x, y, w, h, confidence, classes)
@@ -254,10 +269,10 @@ class inference():
         output_scaled = outputRescaler.fit(ypred[0])
 
         obj_threshold = 0.03
-        boxes = self.__find_high_class_probability_bbox(output_scaled,obj_threshold)
+        boxes = self.__find_high_class_probability_bbox(output_scaled, obj_threshold)
 
         iou_threshold = 0.01
-        final_boxes = self.nonmax_suppression(boxes,iou_threshold=iou_threshold,obj_threshold=obj_threshold)
+        final_boxes = self.nonmax_suppression(boxes, iou_threshold=iou_threshold, obj_threshold=obj_threshold)
 
         ima = self.draw_boxes(image,final_boxes,self.config.classes,verbose=True)
 
