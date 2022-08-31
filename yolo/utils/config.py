@@ -32,8 +32,8 @@ class config(object):
         '''
             batch_size should be a perfect divisor of train and val length
         '''
-        self.batch_size = 8
-        self.l2_coeff = 0.001
+        self.batch_size = 16
+        self.l2_coeff = 0.0001
     
     def _print(self):
         print('*'*10 + ' config ' + '*'*10)
