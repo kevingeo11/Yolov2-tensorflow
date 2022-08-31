@@ -4,23 +4,42 @@ This repo provides an implementation of YoloV2 in TensorFlow 2.0.
 
 ## Usage
 
+### Setting up Config
+
+Setup the config file located in yolo/utils/
+Details like anchor box sizes, width and height of the image, learning rate can be set in config.py
+Training and Inferance scripts use config.py to run properly
+
 ### Detection
 
+Run the Interpreter Notebook inside yolo folder.
+
+Loading config
 ```bash
-# yolov3
-python detect.py --image ./data/meme.jpg
+from utils import config
+_config_ = config.config()
+```
 
-# yolov3-tiny
-python detect.py --weights ./checkpoints/yolov3-tiny.tf --tiny --image ./data/street.jpg
+Loading model
+```bash
+from nets import network as nn
+from tensorflow.keras.models import load_model
 
-# webcam
-python detect_video.py --video 0
+model = nn.build_model(_config_)
+weight_loc = 'location of where weights are stored'
+model.load_weights(weight_loc)
+```
 
-# video file
-python detect_video.py --video path_to_file.mp4 --weights ./checkpoints/yolov3-tiny.tf --tiny
+Running Inference code
+```bash
+from helpers.inference import inference
 
-# video file with output
-python detect_video.py --video path_to_file.mp4 --output ./output.avi
+inference = inference(_config_, model)
+
+img_loc = 'location of the image'
+ypred = inference.run(img_loc)
+
+## ypred returns the image after drawing the bounding box for the detected objects
 ```
 
 ### Training
